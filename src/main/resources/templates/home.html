@@ -1,10 +1,165 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" >
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>MovieLab</title>
+    <link rel="stylesheet" th:href="@{/bootstrap.min.css}">
+    <script th:src="@{/bootstrap.min.js}"></script>
 </head>
 <body>
-  <h3>Hello</h3>
+<h3>Hello</h3>
+<div id="movies"></div>
+<div>
+    <button onclick="addMovieModal()" class="btn btn-primary">ADD MOVIE</button>
+</div>
+
+<!-- Button trigger modal -->
+<!--    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">-->
+<!--        Launch demo modal-->
+<!--    </button>-->
+
+<!-- Modal -->
+<div class="modal fade" id="addMovieModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">ADD Movie</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <label for="name" class="form-label">NAME</label>
+                <input type="text" class="form-control" id="name">
+                <label for="description" class="form-label">Description</label>
+                <input type="text" class="form-control" id="description">
+                <label for="rating" class="form-label">rating</label>
+                <input type="number" class="form-control" id="rating">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button onclick="addMovie()" type="button" class="btn btn-primary" data-bs-dismiss="modal">Save
+                    changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="deleteMovieModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel2">Are you sure&</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="movieId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button onclick="deleteMovie()" type="button" class="btn btn-primary" data-bs-dismiss="modal">Delete
+                    movie
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    loadMovies()
+
+    function loadMovies() {
+        let req = new XMLHttpRequest()
+        req.open("GET", "http://localhost:8080/movies")
+        req.send()
+        let html = ""
+        req.onload = function () {
+            let array = JSON.parse(req.responseText)
+            html += "<table class='table table-striped'>"
+            html += "<thead>"
+            html += "<th>ID</th>"
+            html += "<th>Name</th>"
+            html += "<th>Description</th>"
+            html += "<th>Rating</th>"
+            html += "<th>Views</th>"
+            html += "<th>Details</th>"
+            html += "</thead>"
+            html += "<tbody>"
+            for (let i = 0; i < array.length; i++) {
+                html += "<tr>"
+                html += "<td>" + array[i].id + "</td>"
+                html += "<td>" + array[i].name + "</td>"
+                html += "<td>" + array[i].description + "</td>"
+                html += "<td>" + array[i].rating + "</td>"
+                html += "<td>" + array[i].amountView + "</td>"
+                html += "<td><button onclick='details("+array[i].id+")' class='btn btn-primary'>Details</button></td>"
+                html += "</tr>"
+            }
+            html += "</tbody>"
+            html += "</table>"
+
+            document.getElementById("movies").innerHTML = html
+        }
+
+    }
+
+    function addMovieModal() {
+        const myModal = new bootstrap.Modal("#addMovieModal",
+            {backdrop: true, focus: true, keyboard: true})
+        myModal.show()
+
+    }
+
+    function addMovie() {
+        let req = new XMLHttpRequest()
+        let movieCreate = {
+            "name": document.getElementById("name").value,
+            "description": document.getElementById("description").value,
+            "rating": document.getElementById("rating").value
+        }
+        req.onload = function () {
+            loadMovies()
+        }
+        req.open("POST", "http://localhost:8080/movies")
+        req.setRequestHeader("Content-type", "application/json")
+        req.send(JSON.stringify(movieCreate))
+
+
+    }
+
+    function deleteMovieModal(id) {
+        const myModal = new bootstrap.Modal("#deleteMovieModal",
+            {backdrop: true, focus: true, keyboard: true})
+        document.getElementById("movieId").value = id
+        alert(id)
+        myModal.show()
+    }
+
+    function deleteMovie(){
+        let req = new XMLHttpRequest()
+        let id = document.getElementById('movieId').value
+        req.onload = function (){
+            loadMovies()
+        }
+        req.open("DELETE", "http://localhost:8080/movies/" + id)
+        req.send()
+    }
+
+    function details(id){
+        alert(id)
+        let req = new XMLHttpRequest()
+        req.onload = function (){
+            let result = ""
+            let movieView = JSON.parse(req.responseText)
+            result += "<div>ID</div>"
+            result += "<div>"+movieView.id+"</div>"
+            result += "<div>"+movieView.name+"</div>"
+            result +="<div><button onclick=\"deleteMovieModal("+id+")\" class=\"btn btn-danger\">Delete MOVIE</button>\n" +
+                "</div>"
+            document.getElementById("movies").innerHTML=result
+        }
+        req.open("GET","http://localhost:8080/movies/" + id)
+        req.send()
+    }
+
+</script>
+
 </body>
 </html>
